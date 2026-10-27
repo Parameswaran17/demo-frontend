@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevOps Demo App</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; padding: 0 1rem; color: #1f2933; }
+    .card { border: 1px solid #d0d7de; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
+    code { background: #f3f4f6; padding: .1rem .35rem; border-radius: 4px; }
+    .ok { color: #1a7f37; } .bad { color: #cf222e; }
+  </style>
+</head>
+<body>
+  <h1>DevOps Demo App</h1>
+  <div class="card">
+    <strong>Frontend commit:</strong> <code id="fe-commit">loading...</code>
+  </div>
+  <div class="card">
+    <strong>Backend status:</strong> <span id="be-status">checking...</span><br>
+    <strong>Backend commit:</strong> <code id="be-commit">-</code><br>
+    <strong>Message:</strong> <span id="be-msg">-</span>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    fetch('/version.txt').then(r => r.text()).then(t => $('fe-commit').textContent = t.trim())
+      .catch(() => $('fe-commit').textContent = 'unknown');
+
+    Promise.all([fetch('/api/health'), fetch('/api/message')])
+      .then(async ([h, m]) => {
+        const msg = await m.json();
+        $('be-status').textContent = h.ok ? 'healthy' : 'unhealthy';
+        $('be-status').className = h.ok ? 'ok' : 'bad';
+        $('be-commit').textContent = msg.commit;
+        $('be-msg').textContent = msg.message;
+      })
+      .catch(() => { $('be-status').textContent = 'unreachable'; $('be-status').className = 'bad'; });
+  </script>
+</body>
+</html>
